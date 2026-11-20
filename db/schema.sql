@@ -98,3 +98,68 @@ create table if not exists reminders_sent (
   sent_at timestamptz not null default now(),
   primary key (item_key, kind, due_on)
 );
+create table if not exists clients (
+  id serial primary key,
+  name text not null,
+  address text not null default '',
+  state text not null default '',
+  country text not null default 'India',
+  gstin text not null default '',
+  email text not null default '',
+  currency text not null default 'INR',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create unique index if not exists clients_name on clients (lower(name));
+create table if not exists invoices (
+  id serial primary key,
+  number text not null,
+  fy integer not null,
+  source text not null check (source in ('generated','uploaded')),
+  status text not null default 'issued' check (status in ('issued','cancelled')),
+  invoice_date date not null,
+  due_date date,
+  client_id integer references clients(id),
+  client_name text not null,
+  client_address text not null default '',
+  client_state text not null default '',
+  client_country text not null default 'India',
+  client_gstin text not null default '',
+  supply_type text not null check (supply_type in ('intra','inter','export')),
+  currency text not null default 'INR',
+  fx_rate numeric(12,4),
+  gst_rate numeric(5,2) not null default 0,
+  gst_waived_reason text not null default '',
+  items jsonb not null default '[]'::jsonb,
+  subtotal_minor bigint not null,
+  cgst_minor bigint not null default 0,
+  sgst_minor bigint not null default 0,
+  igst_minor bigint not null default 0,
+  total_minor bigint not null,
+  notes text not null default '',
+  document_id integer references documents(id),
+  created_by integer references users(id),
+  created_at timestamptz not null default now(),
+  cancelled_at timestamptz,
+  cancelled_by integer references users(id),
+  cancel_reason text not null default '',
+  check (status <> 'cancelled' or cancel_reason <> '')
+);
+create unique index if not exists invoices_generated_number on invoices (lower(number)) where source = 'generated';
+create index if not exists invoices_date on invoices (invoice_date);
+create or replace function invoices_locked() returns trigger as $$
+begin
+  if tg_op = 'DELETE' then
+    raise exception 'Invoices are never deleted. Cancel it with a reason instead.';
+  end if;
+  if old.status = 'issued' and new.status = 'cancelled'
+     and (to_jsonb(new) - array['status','cancelled_at','cancelled_by','cancel_reason'])
+       = (to_jsonb(old) - array['status','cancelled_at','cancelled_by','cancel_reason']) then
+    return new;
+  end if;
+  raise exception 'An issued invoice cannot be changed. Cancel it with a reason and issue a new one.';
+end;
+$$ language plpgsql;
+drop trigger if exists invoices_no_change on invoices;
+create trigger invoices_no_change before update or delete on invoices
+  for each row execute function invoices_locked();

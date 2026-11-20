@@ -66,3 +66,9 @@ a.tab { white-space:nowrap; }
   header.top nav { order:3; flex-basis:100%; gap:12px; }
   .tabs { flex-wrap:wrap; }
 }
+a.button { display:inline-block; background:var(--brand); color:#fff; padding:10px 16px; border-radius:8px; font-weight:600; text-decoration:none; }
+table.items input { margin:0; padding:7px; }
+table.items td { vertical-align:middle; }
+.totals { max-width:360px; margin-left:auto; }
+.totals div { display:flex; justify-content:space-between; padding:3px 0; }
+.totals .grand { border-top:1px solid var(--line); margin-top:4px; padding-top:6px; font-size:18px; }

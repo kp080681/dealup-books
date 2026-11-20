@@ -17,6 +17,7 @@ export default async function RootLayout({ children }) {
             <strong>DealUp Books</strong>
             <nav>
               <Link href="/">Ledger</Link>
+              <Link href="/invoices">Invoices</Link>
               <Link href="/compliance">Compliance</Link>
               <Link href="/documents">Documents</Link>
               <Link href="/company">Company</Link>

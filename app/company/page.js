@@ -55,6 +55,19 @@ export default async function Company() {
         <input name="dir_kyc_last_fy" defaultValue={p.dir_kyc_last_fy} inputMode="numeric" maxLength={4} />
       </label>
 
+      <h2>Printed on invoices</h2>
+      <div className="grid">
+        <label>Business email<input type="email" name="business_email" defaultValue={p.business_email} /></label>
+        <label>Phone<input name="phone" defaultValue={p.phone} /></label>
+        <label>LUT number (for export invoices)<input name="lut_number" defaultValue={p.lut_number} /></label>
+        <label>Invoice number prefix<input name="invoice_prefix" defaultValue={p.invoice_prefix} placeholder="DU/INV" /></label>
+        <label>Bank name<input name="bank_name" defaultValue={p.bank_name} /></label>
+        <label>Branch<input name="bank_branch" defaultValue={p.bank_branch} /></label>
+        <label>Account number<input name="bank_account" defaultValue={p.bank_account} inputMode="numeric" /></label>
+        <label>IFSC<input name="bank_ifsc" defaultValue={p.bank_ifsc} /></label>
+        <label>SWIFT (for payments from abroad)<input name="bank_swift" defaultValue={p.bank_swift} /></label>
+      </div>
+
       <h2>Reminders</h2>
       <div className="grid">
         <label>CA's name<input name="ca_name" defaultValue={p.ca_name} /></label>

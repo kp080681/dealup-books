@@ -32,6 +32,11 @@ export async function saveCompanyAction(_prev, fd) {
     if (p[k] && !isDate(p[k])) return { error: 'One of the dates is not valid.' };
   }
   if (!['monthly', 'qrmp'].includes(p.gst_scheme)) p.gst_scheme = 'monthly';
+  p.invoice_prefix = p.invoice_prefix.toUpperCase().replace(/\/+$/, '') || 'DU/INV';
+  if (!/^[A-Z0-9][A-Z0-9/-]{0,19}$/.test(p.invoice_prefix)) return { error: 'The invoice prefix can use letters, numbers, / and -, for example DU/INV.' };
+  p.bank_ifsc = p.bank_ifsc.toUpperCase(); p.bank_swift = p.bank_swift.toUpperCase();
+  if (p.bank_ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(p.bank_ifsc)) return { error: 'The IFSC should be 11 characters, like IOBA0003723.' };
+  if (p.business_email && !validEmail(p.business_email.toLowerCase())) return { error: 'The business email is not valid.' };
   if (p.dir_kyc_last_fy && !/^20\d\d$/.test(p.dir_kyc_last_fy)) return { error: 'For director KYC, enter the starting year of the financial year, for example 2025 for FY 2025-26.' };
   if (p.ca_email && !validEmail(p.ca_email.toLowerCase())) return { error: "The CA's email is not valid." };
   p.ca_email = p.ca_email.toLowerCase();
