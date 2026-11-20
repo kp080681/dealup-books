@@ -2,6 +2,7 @@
 
 import crypto from 'crypto';
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { q } from '../lib/db';
 import { requireOwner } from '../lib/auth';
 import { PROFILE_DEFAULTS } from '../lib/compliance';
@@ -43,7 +44,7 @@ export async function saveCompanyAction(_prev, fd) {
      on conflict (id) do update set profile = excluded.profile, updated_by = excluded.updated_by, updated_at = now()`,
     [JSON.stringify(p), user.id]);
   revalidatePath('/', 'layout');
-  return { ok: 'Company details saved. The compliance calendar now follows them.' };
+  redirect('/');
 }
 
 // ---------- Documents ----------
