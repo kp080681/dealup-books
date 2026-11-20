@@ -49,7 +49,7 @@ export default async function Compliance({ searchParams }) {
           These are the usual dates for a private limited company. {owner ? <><Link href="/company">Add the company details</Link> so</> : 'Once the company details are filled in,'} the list shows only what applies.
         </p>
       ) : null}
-      <p className="mute">Standard due dates. When the government extends one, change it on the item and say why. Anything marked CA is filed by the CA; the reminders go to them too.</p>
+      <p className="mute">Standard due dates. When the government extends one, change it on the item and say why. Anything marked CA is filed by the CA.</p>
 
       {overdue.length ? <><h2>Overdue</h2>{overdue.map((i) => <Item key={i.key} i={i} />)}</> : null}
       <h2>Due in the next 7 days</h2>
