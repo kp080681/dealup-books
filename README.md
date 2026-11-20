@@ -43,8 +43,9 @@ https://dealup-ledger.utplava.dev and hosted on [Utplava](https://utplava.dev).
   content and stored in the database. The CA can download them. Removing a file hides it but
   keeps it on record.
 - **Reminders:**
-  - Email at 7 days, 1 day, and 1, 3 and 7 days late. The CA gets the CA items. Needs
-    `RESEND_API_KEY` and `REMINDER_FROM`.
+  - Email reminders are next. They're in commit 5966272 (`lib/reminders.js`), held back because
+    Utplava treats every setting the code reads as required, which would pause deploys until an
+    email key exists.
   - A private calendar feed (`/settings`) for phone alerts in Google Calendar or the iPhone.
   - The "Due this week" box on the ledger page.
 - **Ledger:** a financial-year filter on the ledger and the CSV. Money received from a
@@ -78,13 +79,6 @@ These are names only. Never commit values: `.env*` files are git-ignored.
 | `DATABASE_URL` | PostgreSQL connection string. On Utplava this is provided automatically by the managed database. |
 | `SESSION_SECRET` | Random text, 24 or more characters, used to sign login cookies. Changing it signs everyone out. |
 | `SETUP_CODE` | One-time code typed on `/setup` to create the owner login. |
-| `RESEND_API_KEY` | Optional. Key from resend.com for email reminders. |
-| `REMINDER_FROM` | Optional. The sender, for example `DealUp Books <books@dealup.co.in>`. The domain must be verified on Resend. |
-| `BOOKS_URL` | Optional. The app's address, used for links in emails. |
-| `CRON_SECRET` | Optional. 24+ random characters. The daily GitHub workflow sends it to `/api/reminders`. |
-
-The daily send is `.github/workflows/reminders.yml` (8:00 India time). It needs the
-repository secrets `BOOKS_URL` and `CRON_SECRET`, and it does nothing until they are set.
 
 ## Database
 

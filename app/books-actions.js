@@ -7,7 +7,6 @@ import { requireOwner } from '../lib/auth';
 import { PROFILE_DEFAULTS } from '../lib/compliance';
 import { todayIST } from '../lib/parse';
 import { DOC_TYPES, readUpload } from '../lib/documents';
-import { sendReminders } from '../lib/reminders';
 
 const str = (fd, k, max = 300) => String(fd.get(k) ?? '').trim().slice(0, max);
 const isDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s + 'T00:00:00Z'))
@@ -129,10 +128,4 @@ export async function newCalendarLinkAction() {
   const token = crypto.randomBytes(24).toString('base64url');
   await q(`insert into company (id, calendar_token) values (1, $1) on conflict (id) do update set calendar_token = excluded.calendar_token`, [token]);
   revalidatePath('/settings');
-}
-
-export async function sendRemindersNowAction() {
-  await requireOwner();
-  const res = await sendReminders(todayIST(), { force: true });
-  return res.error ? { error: res.error } : { ok: res.summary };
 }

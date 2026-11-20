@@ -3,7 +3,7 @@ import { q } from '../../lib/db';
 import SimpleForm from '../../components/SimpleForm';
 import { headers } from 'next/headers';
 import { saveViewerAction, removeViewerAction, changePasswordAction } from '../actions';
-import { newCalendarLinkAction, sendRemindersNowAction } from '../books-actions';
+import { newCalendarLinkAction } from '../books-actions';
 import { getCompany } from '../../lib/books';
 
 export const dynamic = 'force-dynamic';
@@ -20,7 +20,6 @@ export default async function Settings() {
     const proto = h.get('x-forwarded-proto') || 'https';
     if (calendarToken) feed = `${proto}://${host}/api/calendar/${calendarToken}`;
   }
-  const emailReady = Boolean(process.env.RESEND_API_KEY && process.env.REMINDER_FROM);
   return (
     <>
       <h1>Settings</h1>
@@ -36,14 +35,7 @@ export default async function Settings() {
           <form action={newCalendarLinkAction}><button>{feed ? 'Make a new link' : 'Make my calendar link'}</button></form>
 
           <h2>Email reminders</h2>
-          {emailReady ? (
-            <>
-              <p className="mute">Sent each morning 7 days and 1 day before each due date, and again if a date is missed. You get everything; the CA gets the items marked CA (set their email in Company details).</p>
-              <SimpleForm action={sendRemindersNowAction} button="Send me this week's list now" />
-            </>
-          ) : (
-            <p className="ask">Email reminders are not switched on yet. They need an email service key (RESEND_API_KEY) and a sender address (REMINDER_FROM) saved as this app's settings on Utplava.</p>
-          )}
+          <p className="mute">Coming next: an email 7 days and 1 day before each due date, to you and to the CA for the items marked CA. Until then, use the calendar link above and the box on the ledger page.</p>
         </>
       ) : null}
 
