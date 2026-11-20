@@ -71,7 +71,10 @@ export async function parseAction(_prev, fd) {
   await requireOwner();
   const text = str(fd, 'text', 1000);
   if (!text) return { error: 'Type what was paid or received.' };
-  return { proposal: parseEntry(text), nonce: crypto.randomUUID() };
+  const clients = (await q(
+    `select distinct coalesce(nullif(e.client, ''), e.party) as c from entries e
+     where ${ACTIVE} and e.category = 'Client receipt' and coalesce(nullif(e.client, ''), e.party) <> ''`)).rows.map((r) => r.c);
+  return { proposal: parseEntry(text, new Date(), { clients }), nonce: crypto.randomUUID() };
 }
 
 function readEntry(fd) {

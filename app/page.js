@@ -4,6 +4,8 @@ import { q, ACTIVE } from '../lib/db';
 import { ACCOUNTS, CATEGORIES, todayIST } from '../lib/parse';
 import { rupees, niceDate, niceMonth } from '../lib/format';
 import EntryBox from '../components/EntryBox';
+import { dueSoon } from '../lib/books';
+import { fyOf, fyLabel, fyRange, daysBetween } from '../lib/compliance';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +14,8 @@ export default async function Home({ searchParams }) {
   const sp = await searchParams;
   const today = todayIST();
   const month = /^\d{4}-\d{2}$/.test(sp.month || '') ? sp.month : '';
+  const curFy = fyOf(today);
+  const fy = /^20\d\d$/.test(sp.fy || '') ? Number(sp.fy) : (sp.fy === 'all' || month ? null : curFy);
   const account = ACCOUNTS.includes(sp.account) ? sp.account : '';
   const flagged = sp.flagged === '1';
   const history = sp.history === '1';
@@ -19,6 +23,7 @@ export default async function Home({ searchParams }) {
   const where = [history ? 'true' : ACTIVE];
   const params = [];
   if (month) { params.push(month); where.push(`to_char(e.entry_date, 'YYYY-MM') = $${params.length}`); }
+  if (fy) { const [a, b] = fyRange(fy); params.push(a, b); where.push(`e.entry_date between $${params.length - 1} and $${params.length}`); }
   if (account) { params.push(account); where.push(`e.account = $${params.length}`); }
   if (flagged) where.push(`e.ca_flags <> ''`);
 
@@ -32,11 +37,25 @@ export default async function Home({ searchParams }) {
      where ${ACTIVE} and to_char(e.entry_date, 'YYYY-MM') = $1 group by 1, 2`, [thisMonth])).rows;
   const sum = (dir) => sums.filter((s) => s.direction === dir).reduce((a, s) => a + Number(s.total), 0);
   const openFlags = (await q(`select count(*)::int as n from entries e where ${ACTIVE} and e.ca_flags <> ''`)).rows[0].n;
+  const unexplained = (await q(`select count(*)::int as n from entries e where ${ACTIVE} and e.category = 'Unidentified receipt'`)).rows[0].n;
+  const due = await dueSoon(today);
 
-  const exportQs = new URLSearchParams({ ...(month && { month }), ...(account && { account }), ...(flagged && { flagged: '1' }), ...(history && { history: '1' }) }).toString();
+  const exportQs = new URLSearchParams({ ...(fy && { fy: String(fy) }), ...(!fy && !month && { fy: 'all' }), ...(month && { month }), ...(account && { account }), ...(flagged && { flagged: '1' }), ...(history && { history: '1' }) }).toString();
 
   return (
     <>
+      {due.length ? (
+        <div className="card duebox">
+          <strong>{due.some((i) => daysBetween(today, i.due) < 0) ? 'Needs attention' : 'Due this week'}</strong>
+          <ul>
+            {due.slice(0, 5).map((i) => {
+              const d = daysBetween(today, i.due);
+              return <li key={i.key}>{i.title}: <span className={d < 0 ? 'error' : ''}>{d < 0 ? `${-d} day${d === -1 ? '' : 's'} overdue` : d === 0 ? 'today' : d === 1 ? 'tomorrow' : `in ${d} days`}</span>{i.owner === 'ca' ? ' (CA)' : ''}</li>;
+            })}
+          </ul>
+          <Link href="/compliance">{due.length > 5 ? `See all ${due.length}` : 'Open compliance'}</Link>
+        </div>
+      ) : null}
       {user.role === 'owner' ? (
         <>
           <h1>New entry</h1>
@@ -49,11 +68,18 @@ export default async function Home({ searchParams }) {
         <div className="stat">Received<b>{rupees(sum('received'))}</b></div>
         <div className="stat">Paid out<b>{rupees(sum('paid'))}</b></div>
         <div className="stat">Questions for the CA<b>{openFlags}</b></div>
+        <div className="stat">Money in, not yet explained<b>{unexplained}</b></div>
       </div>
 
       <h2>Ledger</h2>
       <form className="card filters" method="get">
-        <label>Month<input type="month" name="month" defaultValue={month} /></label>
+        <label>Financial year
+          <select name="fy" defaultValue={fy ? String(fy) : 'all'}>
+            {[curFy + 1, curFy, curFy - 1, curFy - 2].map((y) => <option key={y} value={y}>{fyLabel(y)}</option>)}
+            <option value="all">All years</option>
+          </select>
+        </label>
+        <label>Month (overrides the year)<input type="month" name="month" defaultValue={month} /></label>
         <label>Account
           <select name="account" defaultValue={account}>
             <option value="">All</option>

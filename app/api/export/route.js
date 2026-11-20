@@ -1,6 +1,7 @@
 import { getUser } from '../../../lib/auth';
 import { q, ACTIVE } from '../../../lib/db';
 import { ACCOUNTS } from '../../../lib/parse';
+import { fyRange } from '../../../lib/compliance';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +20,10 @@ export async function GET(req) {
   const params = [];
   const month = sp.get('month');
   if (month && /^\d{4}-\d{2}$/.test(month)) { params.push(month); where.push(`to_char(e.entry_date, 'YYYY-MM') = $${params.length}`); }
+  const fy = sp.get('fy');
+  if (!(month && /^\d{4}-\d{2}$/.test(month)) && fy && /^20\d\d$/.test(fy)) {
+    const [a, b] = fyRange(Number(fy)); params.push(a, b); where.push(`e.entry_date between $${params.length - 1} and $${params.length}`);
+  }
   const account = sp.get('account');
   if (ACCOUNTS.includes(account)) { params.push(account); where.push(`e.account = $${params.length}`); }
   if (sp.get('flagged') === '1') where.push(`e.ca_flags <> ''`);
@@ -38,7 +43,7 @@ export async function GET(req) {
   return new Response('﻿' + lines.join('\r\n') + '\r\n', {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': `attachment; filename="dealup-ledger${month ? '-' + month : ''}.csv"`,
+      'Content-Disposition': `attachment; filename="dealup-ledger${month ? '-' + month : fy && /^20\d\d$/.test(fy) ? '-FY' + fy + '-' + String(Number(fy) + 1).slice(2) : ''}.csv"`,
       'Cache-Control': 'no-store',
     },
   });

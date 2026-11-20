@@ -16,8 +16,13 @@ test('Preethesh defaults: HDFC and the month just ended', () => {
   const r = p('paid preethesh 15k');
   assert.equal(r.account, 'HDFC'); assert.equal(r.period_month, '2026-10'); assert.equal(r.amount, '15000'); assert.equal(r.question, '');
 });
-test('receipt with client, date and lakh', () => {
+test('receipt from an unknown payer stays unidentified', () => {
   const r = p('Received 1.5 lakh from Shresht Eye Care in IOB on 12 Nov');
+  assert.equal(r.category, 'Unidentified receipt');
+  assert.ok(r.flags.some((f) => /before it counts as income/.test(f)));
+});
+test('receipt with client, date and lakh', () => {
+  const r = parseEntry('Received 1.5 lakh from Shresht Eye Care in IOB on 12 Nov', NOW, { clients: ['Shresht Eye Care'] });
   assert.equal(r.direction, 'received'); assert.equal(r.amount, '150000'); assert.equal(r.account, 'IOB');
   assert.equal(r.party, 'Shresht Eye Care'); assert.equal(r.entry_date, '2026-11-12'); assert.equal(r.category, 'Client receipt');
 });

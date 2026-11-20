@@ -1,0 +1,21 @@
+# Sends the day's compliance reminders. Runs at 8:00 India time.
+# Needs two repository secrets: BOOKS_URL (for example https://dealup-ledger.utplava.dev)
+# and CRON_SECRET (the same value saved as CRON_SECRET in the app's settings on Utplava).
+name: Daily reminders
+on:
+  schedule:
+    - cron: '30 2 * * *'
+  workflow_dispatch:
+permissions: {}
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ask the app to send today's reminders
+        env:
+          BOOKS_URL: ${{ secrets.BOOKS_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$BOOKS_URL" ] || [ -z "$CRON_SECRET" ]; then echo "Secrets not set yet; skipping."; exit 0; fi
+          curl -fsS --retry 3 --retry-delay 20 -X POST -H "Authorization: Bearer $CRON_SECRET" "$BOOKS_URL/api/reminders"
